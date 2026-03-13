@@ -1,0 +1,60 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Account {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  type      String   // ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
+  items     JournalItem[]
+  createdAt DateTime @default(now())
+}
+
+model Journal {
+  id          String   @id @default(uuid())
+  date        DateTime @default(now())
+  description String
+  reference   String?  // Nomor Bukti
+  items       JournalItem[]
+}
+
+model JournalItem {
+  id         String  @id @default(uuid())
+  journalId  String
+  accountId  String
+  debit      Float   @default(0)
+  credit     Float   @default(0)
+  journal    Journal @relation(fields: [journalId], references: [id])
+  account    Account @relation(fields: [accountId], references: [id])
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  invoiceNumber String        @unique
+  customerName  String
+  date          DateTime      @default(now())
+  dueDate       DateTime
+  totalAmount   Float         @default(0)
+  status        String        @default("PENDING") // PENDING, PAID, OVERDUE
+  items         InvoiceItem[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model InvoiceItem {
+  id          String  @id @default(uuid())
+  invoiceId   String
+  description String
+  quantity    Int     @default(1)
+  price       Float   @default(0)
+  total       Float   @default(0)
+  invoice     Invoice @relation(fields: [invoiceId], references: [id])
+}
